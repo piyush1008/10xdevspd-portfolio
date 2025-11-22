@@ -1,0 +1,53 @@
+name: deploy the backend
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Path to the build context, usually the root of your repo
+          file: ./Docker/Dockerfile.backend # Path to your Dockerfile
+          push: true # Set to true to push the image to the registry
+          tags: ${{ secrets.DOCKER_USERNAME }}/todobackend:${{github.sha}} # Replace with your image name and tag
+
+      
+      # - name : Deploy the docker image on EC2
+      #   env:
+      #       SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+      #       SSH_HOST: ${{ secrets.EC2_HOST }}
+      #       SSH_USER: ${{ secrets.EC2_USER }}
+      #   run: |
+      #       echo "$SSH_PRIVATE_KEY" > private_key
+      #       chmod 600 private_key
+            
+      #       # SSH into EC2 and run Docker commands
+      #         ssh -o StrictHostKeyChecking=no -i private_key ${SSH_USER}@${SSH_HOST} '
+      #           # Example: Pull and run a Docker image
+      #           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/todobackend:${{github.sha}} 
+      #           sudo docker stop todobackend || true # Stop if running
+      #           sudo docker rm todobackend || true  # Remove if exists
+      #           sudo docker run -d --name todobackend -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/todobackend:${{github.sha}} 
+      #         '
+      #         # Clean up the private key file
+      #         rm private_key
