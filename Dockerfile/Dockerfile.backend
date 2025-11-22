@@ -1,0 +1,32 @@
+FROM node:20-alpine
+
+# Install pnpm 9.0.0 (as specified in package.json)
+RUN npm install -g pnpm@9.0.0
+
+WORKDIR /app
+
+# Copy workspace configuration files first
+COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+COPY ./package.json ./package.json
+COPY ./turbo.json ./turbo.json
+
+# Copy packages and app
+COPY ./packages ./packages
+COPY ./apps/http-backend ./apps/http-backend
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+# --frozen-lockfile ensures the lockfile (pnpm-lock.yaml) is not modified
+# If package.json and pnpm-lock.yaml are out of sync, the build fails, which helps catch dependency issues early.
+
+# Build the project
+RUN pnpm run build
+
+EXPOSE 8081
+
+# Run from root so node_modules resolution works correctly
+# CMD ["node", "apps/http-backend/dist/index.js"]
+
+CMD ["pnpm", "run", "start:backend"]
+
