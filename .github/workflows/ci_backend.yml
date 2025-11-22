@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: . # Path to the build context, usually the root of your repo
-          file: ./Docker/Dockerfile.backend # Path to your Dockerfile
+          file: ./Dockerfile/Dockerfile.backend # Path to your Dockerfile
           push: true # Set to true to push the image to the registry
           tags: ${{ secrets.DOCKER_USERNAME }}/portfolio-backend:${{github.sha}} # Replace with your image name and tag
 
